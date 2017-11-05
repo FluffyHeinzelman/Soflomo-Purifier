@@ -16,8 +16,24 @@ class PurifierFilterFactory implements MutableCreationOptionsInterface
 
     public function __invoke(FilterPluginManager $filterPluginManager)
     {
-        $htmlPurifier = $filterPluginManager->getServiceLocator()->get('HTMLPurifier');
+        $serviceLocator = $filterPluginManager->getServiceLocator();
 
-        return new PurifierFilter($htmlPurifier, $this->getCreationOptions());
+        /** @var \HTMLPurifier $htmlPurifier */
+        $htmlPurifier = $serviceLocator->get('HTMLPurifier');
+
+        $config = $serviceLocator->get('config');
+        if (!empty($config['soflomo_purifier'])) {
+            $config = array_replace_recursive(
+                $config['soflomo_purifier'],
+                $this->getCreationOptions()
+            );
+
+            unset($config['standalone']);
+            unset($config['standalone_path']);
+        } else {
+            $config = $this->getCreationOptions();
+        }
+
+        return new PurifierFilter($htmlPurifier, $config);
     }
 }
